@@ -1,4 +1,4 @@
-//uçdated
+//updated
 const { getModule, contextMenu, React, constants: { Routes } } = require('vencord/webpack');
 const { Menu: { MenuSeperator, MenuItem } } = require('vencord/components');
 const { sleep, findInReactTree } = require('vencord/util');
