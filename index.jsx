@@ -1,10 +1,10 @@
-const { getModule, contextMenu, React, constants: { Routes } } = require('equicord/webpack');
-const { Menu: { MenuSeperator, MenuItem } } = require('equicord/components');
-const { sleep, findInReactTree } = require('equicord/util');
-const { inject, uninject } = require('equicord/injector');
-const { Plugin } = require('equicord/entities');
-const { get, del } = require('equicord/http');
-const { SliderInput, RadioGroup } = require('equicord/components/settings');
+const { getModule, contextMenu, React, constants: { Routes } } = require('vencord/webpack');
+const { Menu: { MenuSeperator, MenuItem } } = require('vencord/components');
+const { sleep, findInReactTree } = require('vencord/util');
+const { inject, uninject } = require('vencord/injector');
+const { Plugin } = require('vencord/entities');
+const { get, del } = require('vencord/http');
+const { SliderInput, RadioGroup } = require('vencord/components/settings');
 
 const { getChannelId } = getModule(['getLastSelectedChannelId'], false);
 const { getCurrentUser } = getModule(['getCurrentUser', 'getUser'], false);
@@ -47,7 +47,7 @@ module.exports = class MessageCleaner extends Plugin {
          this.settings.set('aliases', ['prune', 'purge', 'cl', 'pr']);
       }
 
-      equicord.api.commands.registerCommand({
+      Vencord.api.commands.registerCommand({
          command: 'clear',
          aliases: this.settings.get('aliases'),
          description: 'Clears a certain amount of messages.',
@@ -55,7 +55,7 @@ module.exports = class MessageCleaner extends Plugin {
          executor: this.clear.bind(this)
       });
 
-      equicord.api.settings.registerSettings('message-cleaner', {
+      Vencord.api.settings.registerSettings('message-cleaner', {
          category: this.entityID,
          label: 'Message Cleaner',
          render: this.SettingsComponent.bind(this)
@@ -67,8 +67,8 @@ module.exports = class MessageCleaner extends Plugin {
    pluginWillUnload() {
       this.promises.cancelled = true;
       for (const patch of this.patches) uninject(patch);
-      equicord.api.commands.unregisterCommand('clear');
-      equicord.api.settings.unregisterSettings('message-cleaner');
+      Vencord.api.commands.unregisterCommand('clear');
+      Vencord.api.settings.unregisterSettings('message-cleaner');
    }
 
    findLazy(filter) {
@@ -126,7 +126,7 @@ module.exports = class MessageCleaner extends Plugin {
       this.clearToasts(channel);
 
       if (args.length === 0) {
-         return equicord.api.notices.sendToast(`${Toasts.noAmount}-${channel}`, {
+         return Vencord.api.notifications.sendToast(`${Toasts.noAmount}-${channel}`, {
             header: 'Please specify an amount.',
             type: 'danger'
          });
@@ -134,21 +134,21 @@ module.exports = class MessageCleaner extends Plugin {
 
       if (args[0]?.toLowerCase() === 'stop') {
          if (!this.pruning[channel]) {
-            return equicord.api.notices.sendToast(`${Toasts.notPruning}-${channel}`, {
+            return Vencord.api.notifications.sendToast(`${Toasts.notPruning}-${channel}`, {
                header: 'Not pruning in this channel.',
                type: 'danger'
             });
          }
 
          delete this.pruning[channel];
-         return equicord.api.notices.sendToast(`${Toasts.stopped}-${channel}`, {
+         return Vencord.api.notifications.sendToast(`${Toasts.stopped}-${channel}`, {
             header: 'Stopped pruning.',
             type: 'success'
          });
       }
 
       if (this.pruning[channel] == true) {
-         return equicord.api.notices.sendToast(`${Toasts.stillRunning}-${channel}`, {
+         return Vencord.api.notifications.sendToast(`${Toasts.stillRunning}-${channel}`, {
             header: 'Already pruning in this channel.',
             type: 'danger'
          });
@@ -162,7 +162,7 @@ module.exports = class MessageCleaner extends Plugin {
       }
 
       if (Number.isNaN(count) || count <= 0) {
-         return equicord.api.notices.sendToast(`${Toasts.noAmountParsed}-${channel}`, {
+         return Vencord.api.notifications.sendToast(`${Toasts.noAmountParsed}-${channel}`, {
             header: 'Please specify an amount.',
             type: 'danger'
          });
@@ -170,7 +170,7 @@ module.exports = class MessageCleaner extends Plugin {
 
       this.pruning[channel] = true;
 
-      equicord.api.notices.sendToast(`${Toasts.started}-${channel}`, {
+      Vencord.api.notifications.sendToast(`${Toasts.started}-${channel}`, {
          header: 'Started pruning',
          type: 'success'
       });
@@ -205,7 +205,7 @@ module.exports = class MessageCleaner extends Plugin {
             }
          }
 
-         return equicord.api.notices.sendToast(`${Toasts.finished}-${channel}`, {
+         return Vencord.api.notifications.sendToast(`${Toasts.finished}-${channel}`, {
             header: 'Finished Clearing Messages',
             content: `Cleared ${amount} messages ${location}`,
             type: 'success',
@@ -230,7 +230,7 @@ module.exports = class MessageCleaner extends Plugin {
             ]
          });
       } else {
-         return equicord.api.notices.sendToast(this.random(20), {
+         return Vencord.api.notifications.sendToast(this.random(20), {
             header: 'No messages found.',
             type: 'danger'
          });
@@ -305,19 +305,19 @@ module.exports = class MessageCleaner extends Plugin {
       const old = mute?.props?.children;
       if (mute && old) {
          const button = (!this.pruning[instance] ?
-            <MenuItem
-               id='clean-all'
-               key='clean-all'
-               label='Purge all messages'
-               action={() => this.clear(['all'], null, instance, !channel)}
-            />
+            React.createElement(MenuItem, {
+               id: 'clean-all',
+               key: 'clean-all',
+               label: 'Purge all messages',
+               action: () => this.clear(['all'], null, instance, !channel)
+            })
             :
-            <MenuItem
-               id='stop-cleaning'
-               key='stop-cleaning'
-               label='Stop purging'
-               action={() => delete this.pruning[instance]}
-            />
+            React.createElement(MenuItem, {
+               id: 'stop-cleaning',
+               key: 'stop-cleaning',
+               label: 'Stop purging',
+               action: () => delete this.pruning[instance]
+            })
          );
 
 
@@ -462,14 +462,16 @@ module.exports = class MessageCleaner extends Plugin {
    }
 
    clearToasts(channel) {
-      let toasts = document.querySelector('.equicord-toast-container');
+      let toasts = document.querySelector('.vencord-toast-container');
       if (toasts) {
          for (let i of (toasts.children ?? [])) {
             let id = toasts.children[i]?.id;
             if (id?.includes('message-cleaner') && id?.includes(channel)) toasts[i].remove();
          }
-         for (let t in equicord.api.notices.toasts) {
-            if (t.includes('message-cleaner') && t.includes(channel)) delete equicord.api.notices.toasts[t];
+         if (Vencord.api.notifications?.toasts) {
+            for (let t in Vencord.api.notifications.toasts) {
+               if (t.includes('message-cleaner') && t.includes(channel)) delete Vencord.api.notifications.toasts[t];
+            }
          }
       }
    }
